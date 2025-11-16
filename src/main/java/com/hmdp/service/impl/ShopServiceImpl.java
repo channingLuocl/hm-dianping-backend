@@ -12,8 +12,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.hmdp.utils.RedisConstants.CACHE_SHOP_KEY;
+import static com.hmdp.utils.RedisConstants.CACHE_SHOP_TTL;
 
 /**
  * <p>
@@ -66,6 +68,7 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             shopMap.put("createTime", shop.getCreateTime().toString());
             shopMap.put("updateTime", shop.getUpdateTime().toString());
             stringRedisTemplate.opsForHash().putAll(CACHE_SHOP_KEY + id, shopMap);
+            stringRedisTemplate.expire(CACHE_SHOP_KEY + id, CACHE_SHOP_TTL, TimeUnit.MINUTES);
             return Result.ok(shop);
         }
     }
