@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @MapperScan("com.hmdp.mapper")
 @SpringBootApplication
+//@ServletComponentScan  //用于过滤器
 public class HmDianPingApplication {
 
     public static void main(String[] args) {
