@@ -19,6 +19,7 @@ public class RedisConstants {
     public static final String CACHE_SHOP_TYPE_KEY = "cache:shopType:";
     public static final Long CACHE_SHOP_TYPE_TTL = 30L;
 
+    //    互斥锁解决缓存击穿那里用到的setnx的相关常量
     public static final String LOCK_SHOP_KEY = "lock:shop:";
     public static final Long LOCK_SHOP_TTL = 10L;
 
