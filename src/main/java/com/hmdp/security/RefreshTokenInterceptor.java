@@ -28,13 +28,11 @@ public class RefreshTokenInterceptor implements HandlerInterceptor {
 //        1.从请求头中获取token
         String token = request.getHeader("authorization");
         if (token == null) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return true;
         }
 //        2.从redis中获得token对应的用户信息
         Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(LOGIN_USER_KEY + token);
         if (userMap.isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             return true;
         }
         UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);  //由于我们存的是map，所以要把map转为userDTO，用到hutool中的fillBeanWithMap
