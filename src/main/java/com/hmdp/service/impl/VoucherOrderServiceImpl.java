@@ -55,28 +55,35 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         if (voucher.getStock() < 1) {
             return Result.fail("库存不足");
         }
-//        5.扣减库存，相当于
+//        5.一人一单
+//        5.1 查询订单,等价于 SELECT COUNT(*) FROM tb_voucher_order WHERE user_id = #{userId} AND voucher_id = #{voucherId};
+        int count = query().eq("user_id", UserHolder.getUser().getId()).eq("voucher_id", voucherId).count();
+//        5.2 判断是否存在
+        if (count > 0) {
+            return Result.fail("该用户已经购买过了");
+        }
+//        6.扣减库存，相当于
 //        用到mybatis-plus的https://baomidou.com/guides/data-interface/#%E4%BD%BF%E7%94%A8%E6%AD%A5%E9%AA%A4的update
-//        普通的乐观锁，是 UPDATE seckill_voucher SET stock = stock - 1 WHERE voucher_id = #{voucherId} and stock = #{voucher.getStock()}；
-//        这样会让成功率非常低，在我们这里可以改成 UPDATE seckill_voucher SET stock = stock - 1 WHERE voucher_id = #{voucherId} and stock > 0;
+//        普通的乐观锁，是 UPDATE tb_seckill_voucher SET stock = stock - 1 WHERE voucher_id = #{voucherId} and stock = #{voucher.getStock()}；
+//        这样会让成功率非常低，在我们这里可以改成 UPDATE tb_seckill_voucher SET stock = stock - 1 WHERE voucher_id = #{voucherId} and stock > 0;
 //        不强制要求相等，而是有就可以买
         boolean success = seckillVoucherService.update().setSql("stock = stock - 1").eq("voucher_id", voucherId)
                 .gt("stock", 0).update();
         if (!success) {
             return Result.fail("库存不足");
         }
-//        6.创建订单
+//        7.创建订单
         VoucherOrder voucherOrder = new VoucherOrder();
-//        6.1 订单id，用全局唯一id生成器
+//        7.1 订单id，用全局唯一id生成器
         long orderId = redisIdWorker.nextId("order");
         voucherOrder.setId(orderId);
-//        6.2 用户id
+//        7.2 用户id
         voucherOrder.setUserId(UserHolder.getUser().getId());
-//        6.3 代金券id
+//        7.3 代金券id
         voucherOrder.setVoucherId(voucherId);
-//        6.4 把订单写入数据库
+//        7.4 把订单写入数据库
         save(voucherOrder);
-//        7,返回订单id
+//        8,返回订单id
         return Result.ok(orderId);
     }
 }
