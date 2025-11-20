@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
@@ -18,24 +18,24 @@
     </properties>
     <dependencies>
         <dependency>
-<!--            1.redis  Java客户端  相关依赖-->
-<!--            1.1spring-data-redis依赖-->
+            <!--            1.redis  Java客户端  相关依赖-->
+            <!--            1.1spring-data-redis依赖-->
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-<!--        1.2连接池依赖-->
+        <!--        1.2连接池依赖-->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
         </dependency>
 
-<!--        2.web项目起步依赖-->
+        <!--        2.web项目起步依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-<!--        3.MySQL依赖-->
+        <!--        3.MySQL依赖-->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
@@ -43,31 +43,36 @@
             <version>5.1.47</version>
         </dependency>
 
-<!--        4.lombok依赖-->
+        <!--        4.lombok依赖-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-<!--        5.单元测试依赖-->
+        <!--        5.单元测试依赖-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
-<!--        6.mybatis-plus起步依赖-->
+        <!--        6.mybatis-plus起步依赖-->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
             <version>3.4.3</version>
         </dependency>
-<!--        7.hutool工具类-->
+        <!--        7.hutool工具类-->
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
             <version>5.7.17</version>
+        </dependency>
+        <!--        8.用于com.hmdp.service.impl.VoucherOrderServiceImpl中获取事务代理对象的依赖-->
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
         </dependency>
     </dependencies>
 
