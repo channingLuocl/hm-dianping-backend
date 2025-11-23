@@ -15,7 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,5 +112,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements IU
         stringRedisTemplate.opsForHash().putAll(LOGIN_USER_KEY + token, userMap);
         stringRedisTemplate.expire(LOGIN_USER_KEY + token, LOGIN_USER_TTL, TimeUnit.MINUTES);  //设置有效期
         return Result.ok(token);
+    }
+
+    @Override
+    public Result logout() {
+        // 1. 获取当前请求的 token（从请求头获取，前端需传递）
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        String token = request.getHeader("authorization");
+        // 2. 校验 token 是否存在（防止非法请求）
+        if (token == null || token.trim().isEmpty()) {
+            return Result.ok("已登出"); // 无 token 视为已登出，避免报错
+        }
+        // 3. 构建 Redis 键，删除对应的用户信息
+        String redisKey = LOGIN_USER_KEY + token;
+        Boolean delete = stringRedisTemplate.delete(redisKey);
+        // 4. 日志记录（可选，便于排查）
+        if (delete) {
+            log.debug("用户登出成功，删除 Redis 键：{}", redisKey);
+        } else {
+            log.debug("登出时未找到对应 Redis 键（可能已过期）：{}", redisKey);
+        }
+        // 5. 返回登出成功结果
+        return Result.ok("登出成功");
     }
 }
