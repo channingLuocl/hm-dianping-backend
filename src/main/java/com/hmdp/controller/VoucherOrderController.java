@@ -32,6 +32,9 @@ public class VoucherOrderController {
      */
     @PostMapping("seckill/{id}")
     public Result seckillVoucher(@PathVariable("id") Long voucherId) {
-        return voucherOrderService.seckillVoucher(voucherId);
+        //普通的写法，包括超卖和一人一单问题，乐观锁和悲观锁
+//        return voucherOrderService.seckillVoucher(voucherId);
+        //异步优化秒杀
+        return voucherOrderService.seckillVoucherAsync(voucherId);
     }
 }

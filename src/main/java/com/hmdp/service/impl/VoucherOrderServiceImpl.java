@@ -11,10 +11,14 @@ import com.hmdp.utils.RedisIdWorker;
 import com.hmdp.utils.UserHolder;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 /**
  * <p>
@@ -26,12 +30,24 @@ import java.time.LocalDateTime;
  */
 @Service
 public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, VoucherOrder> implements IVoucherOrderService {
+
+    // Lua 脚本：校验秒杀资格（开始时间、结束时间、库存、一人一单）
+    private static final DefaultRedisScript<Long> SECKILL_SCRIPT;
+
+    static {
+        SECKILL_SCRIPT = new DefaultRedisScript<>();
+        SECKILL_SCRIPT.setLocation(new ClassPathResource("lua/seckill.lua"));
+        SECKILL_SCRIPT.setResultType(Long.class);
+    }
+
     @Autowired
     private ISeckillVoucherService seckillVoucherService;
     @Autowired
     private VoucherOrderMapper voucherOrderMapper;
     @Autowired
     private RedisIdWorker redisIdWorker;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     /**
      * 秒杀券下单
@@ -103,4 +119,35 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         return Result.ok(orderId);
 
     }
+
+    /**
+     * 秒杀券下单,异步优化写法
+     *
+     * @param voucherId
+     * @return
+     */
+    @Override
+    public Result seckillVoucherAsync(Long voucherId) {
+//        1.执行lua脚本
+        Long userId = UserHolder.getUser().getId();
+        Long result = stringRedisTemplate.execute(
+                SECKILL_SCRIPT,
+                Collections.emptyList(),
+                voucherId.toString(),
+                userId.toString()
+        );
+//        2.判断结果是为0
+        int r = result.intValue();
+//        2.1.不为0,代表没有购买资格
+        if (r != 0) {
+            return Result.fail(r == 1 ? "库存不足" : "不能重复下单");
+        }
+//        2.2.为0,有购买资格,把下单信息保存到阻塞队列
+        long orderId = redisIdWorker.nextId("order");
+//        TODO:保存到阻塞队列
+//        3.返回订单id
+        return Result.ok(orderId);
+    }
+
+
 }

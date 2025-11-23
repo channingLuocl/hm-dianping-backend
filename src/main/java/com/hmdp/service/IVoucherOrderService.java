@@ -28,4 +28,12 @@ public interface IVoucherOrderService extends IService<VoucherOrder> {
      * @return
      */
     Result createVoucherOrder(Long voucherId);
+
+    /**
+     * 秒杀券下单,异步优化写法
+     *
+     * @param voucherId
+     * @return
+     */
+    Result seckillVoucherAsync(Long voucherId);
 }
