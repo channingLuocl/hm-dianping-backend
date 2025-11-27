@@ -7,7 +7,11 @@ import com.hmdp.entity.Follow;
 import com.hmdp.mapper.FollowMapper;
 import com.hmdp.service.IFollowService;
 import com.hmdp.utils.UserHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+
+import static com.hmdp.constant.RedisConstants.FOLLOW_KEY;
 
 /**
  * <p>
@@ -19,6 +23,8 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> implements IFollowService {
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
     public Result follow(Long followUserId, Boolean isFollow) {
@@ -29,12 +35,19 @@ public class FollowServiceImpl extends ServiceImpl<FollowMapper, Follow> impleme
             Follow follow = new Follow();
             follow.setUserId(userId);
             follow.setFollowUserId(followUserId);
-            save(follow);
+            boolean isSuccess = save(follow);
+            if (isSuccess) {
+//                把关注情况放入redis集合
+                stringRedisTemplate.opsForSet().add(FOLLOW_KEY + userId, String.valueOf(followUserId));
+            }
         } else {
 //            3.取关,删除 delete from tb_follow where userId = ? and follow_user_id = ?
 //            用到mybatis-plus的 https://baomidou.com/guides/data-interface/#remove
-            remove(new QueryWrapper<Follow>().
+            boolean isSuccess = remove(new QueryWrapper<Follow>().
                     eq("user_id", userId).eq("follow_user_id", followUserId));
+            if (isSuccess) {
+                stringRedisTemplate.opsForSet().remove(FOLLOW_KEY + userId, String.valueOf(followUserId));
+            }
         }
         return Result.ok();
     }

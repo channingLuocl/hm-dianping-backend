@@ -28,6 +28,9 @@ public class RedisConstants {
 
     //    博客点赞相关常量
     public static final String BLOG_LIKED_KEY = "blog:liked:";
+
+    //    关注相关常量
+    public static final String FOLLOW_KEY = "follows:";
     
     public static final String FEED_KEY = "feed:";
     public static final String SHOP_GEO_KEY = "shop:geo:";
