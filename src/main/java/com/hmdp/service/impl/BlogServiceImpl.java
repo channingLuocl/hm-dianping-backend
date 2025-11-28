@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.hmdp.constant.SystemConstants;
 import com.hmdp.dto.Result;
+import com.hmdp.dto.ScrollResult;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
 import com.hmdp.entity.Follow;
@@ -15,9 +16,11 @@ import com.hmdp.service.IFollowService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.UserHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -142,6 +145,45 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         return Result.ok(blog.getId());
     }
 
+    @Override
+    public Result queryBlogOfFollow(Long max, Integer offset) {
+//        1.获取当前用户
+        Long userId = UserHolder.getUser().getId();
+//        2.查询收件箱   ZREVRANGEBYSCORE key Max Min LIMIT offset count
+        String key = FEED_KEY + userId;
+        Set<ZSetOperations.TypedTuple<String>> typedTuples = stringRedisTemplate.opsForZSet().reverseRangeByScoreWithScores(key, 0, max, offset, 2);
+        if (typedTuples == null || typedTuples.isEmpty()) {
+            return Result.ok();
+        }
+//        3.解析数据:blogId，并且把取出来的blogId放在ids数组中；并且计算下一次查询的 minTime(时间戳)和offset
+        List<Long> ids = new ArrayList<>(typedTuples.size());
+        Long minTime = 0L;
+        int os = 1;
+        for (ZSetOperations.TypedTuple<String> typedTuple : typedTuples) {
+            ids.add(Long.valueOf(typedTuple.getValue()));
+            long time = typedTuple.getScore().longValue();
+            if (time == minTime) {
+                os++;
+            } else {
+                os = 1;
+                minTime = time;
+            }
+        }
+//        4.根据id查询blog
+        List<Blog> blogs = listByIds(ids);
+        for (Blog blog : blogs) {
+            queryBlogUser(blog);
+            isBlogLiked(blog);
+        }
+//        5.封装并返回
+        ScrollResult ret = new ScrollResult();
+        ret.setList(blogs);
+        ret.setOffset(os);
+        ret.setMinTime(minTime);
+        return Result.ok(ret);
+    }
+
+    //    把用户信息封装进去
     private void queryBlogUser(Blog blog) {
         Long userId = blog.getUserId();
         User user = userService.getById(userId);
@@ -149,6 +191,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         blog.setIcon(user.getIcon());
     }
 
+    //    把点赞情况封装进去
     private void isBlogLiked(Blog blog) {
 //        1.获取当前登录用户
         UserDTO user = UserHolder.getUser();
