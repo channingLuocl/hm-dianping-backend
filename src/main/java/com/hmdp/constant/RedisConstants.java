@@ -31,8 +31,10 @@ public class RedisConstants {
 
     //    关注相关常量
     public static final String FOLLOW_KEY = "follows:";
-    
+
+    //    推模式实现feed流收件箱的常量
     public static final String FEED_KEY = "feed:";
+    
     public static final String SHOP_GEO_KEY = "shop:geo:";
     public static final String USER_SIGN_KEY = "sign:";
 }
